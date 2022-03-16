@@ -1,0 +1,22 @@
+
+(function() {
+    var listener = window.hotPx.injector.injectAll(
+        {
+            "context": 'checkout',
+            "instanceId": '676892',
+            "phase": 'PURCHASE',
+            "pixelHost": 'api-pixel.hotmart.com',
+            "apiTrackingHost": 'tracking-api.hotmart.com',
+            "eventId": 'HP67416473761674'
+        },
+        [
+            {
+                id: 'FACEBOOK_370416879',
+                code: '//api-pixel.hotmart.com/px/v1/676892/facebook/purchase.html?hotmart_pixel_integration=H4sIAAAAAAAAAHVTXY-iMBT9K6TPaqB8-7SKnWDGUSI6M2YzIRWLkgAlLbhLjP99btU17MM8UU7Puffcj15QfaKSoTGKtusgnMQEDVAjaCVp2uS8QuMLSvlBEcLIcS3DsVzTdQw4AjFvWCnR-PcFVbRUnKAVkmshretOm7GzRv7WgkkJ1EcQx3U8H6t_2rAjFx1g8yrjoqQqnbZh6aniBT92wKlFnoLIcnR7ZOIBoiVvqwaNjeuXCliWuZQgujtoJRPBPUnmOv7eM72hmdnZ0KLmfuinvj7UPc90bR07uqss0CzLi_yW9yH8wDZ2fN9xP5XDVghWpcrhNp4BcKZFCyzTHPl-P_-mq5U4JosFWd9KrRqmfIKrWvBzfmAC7l8mAZmuVq_AkKxpa9XaLGfF4e7_0aCXaRLNP8kimfdSItvyXRsb2Me2Zeguug6egjs7DtaELJMgJMHrarvpSRsBn5_4vaH_xI_JcpZMd0k02b2R5SZONruIxEmwWs7mm_lq2ZPSokhq2pVQvEwa6IrsB_oIIeEt2vtksSXxf8I_tJOJZNUhuWEghBGfmZC3HUTvBrpevxQmT7yuVT-fOzfLYZG0NS1zwbXgRIVQu8NKmhdwK244xkm6p79OvFHwCGYHzvoTnqx7fp4L9yjmMeBgEof_2qBeCT0CqOIcYJfh-EaFZtgDDesYDzRvjP2xaWnRG3B5lj23syxyzjvaoF6BxvUbYVgiCIkDAAA&event_id=HP67416473761674',
+                type: 'IFRAME',
+                templateKey: 'FACEBOOK_PURCHASE_V1'
+            },
+        ]
+    );
+    window.hotPx.integrator.sendIntegrationEvent(listener, '10fdb8b9-b229-447f-af69-3da9497e609c_1647376174602');
+})();

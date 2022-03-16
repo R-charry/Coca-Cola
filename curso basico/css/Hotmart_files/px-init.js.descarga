@@ -1,0 +1,355 @@
+(function() {
+    if (!window.hotPx) {
+        var iframesToInject = [];
+        var iframesToInjectedSuccessfully = [];
+        var domainsToInject = [];
+        var domainsInjectedSuccessfully = [];
+        var queryString = window.location.search;
+        var urlParams = new URLSearchParams(queryString);
+        var pixelEventTestApi = urlParams.get('pixel_event_test_api');
+        var checkFunction = 0;
+        var checkMonitoring = 0;
+        var injectScript = new Date();
+
+        window.hotPx = {
+            current: document.querySelectorAll('script[src$="/js/px-init.js"]')[0]
+        };
+
+        window.hotPx.integrator = function() {
+            var self = {};
+            var integrationSequencer = 0;
+            var injectIntegrationScript = function (integrationIdentifier) {
+                // TODO validar: var integrationSequencer = getIntegrationSequencer();
+                //debugger
+
+                var eventId = window.URL.createObjectURL(new Blob([])).split('/').pop() +'_'+ new Date().valueOf();
+
+                return new Promise(function(resolve, reject) {
+                    checkFunction++;
+                    var pxInitScript = window.hotPx.current;
+                    if (pxInitScript.tagName.toLowerCase() != 'script') {
+                        reject('[DANGER] px-init is not a script');
+                    } else {
+                        var first=document.getElementsByTagName('script')[0],
+                        script=document.createElement('script');
+                        script.id = 'hotmart_pixel_integration_' + eventId;
+                        src = pxInitScript.src.split('/js/')[0] +'/px.js?hotmart_pixel_integration='+integrationIdentifier+'&integration_sequencer=' + eventId+'&event_id='+eventId;
+
+                        script.src = src + '&pixel_event_test_api=' + pixelEventTestApi;
+
+                        //debugger
+                        first.parentNode.insertBefore(script,first);
+                        script.addEventListener('all-pixels-injected', function(event) {
+                            if(event.target.id == 'hotmart_pixel_integration_' + eventId){ resolve("loaded px.js") }
+                        });
+                    }
+                });
+            }
+            
+            var injectContextScript = function (eventData) {
+                // TODO validar: var integrationSequencer = getIntegrationSequencer();
+                var eventId = window.URL.createObjectURL(new Blob([])).split('/').pop() +'_'+ new Date().valueOf();
+                return new Promise(function(resolve, reject) {
+                    checkFunction++;
+                    var pxInitScript = document.getElementById('hotmart_px_init');
+                    if (pxInitScript.tagName.toLowerCase() != 'script') {
+                        reject('[DANGER] px-init is not a script');
+                    } else {
+                        var first=document.getElementsByTagName('script')[0],
+                        script=document.createElement('script');
+                        script.id = 'event_data_' + eventId;
+                        src = pxInitScript.src.split('/js/')[0] +'/context-px.js?event_data='+eventData+'&integration_sequencer=' + eventId + '&event_id=' + eventId;
+                        script.src = src
+                        first.parentNode.insertBefore(script,first);
+                        script.addEventListener('all-pixels-injected', function(event) {
+                            if(event.target.id == 'event_data_' + eventId){ resolve("loaded context-px.js") }
+                        });
+                    }
+                });
+            }
+            
+            var getIntegrationSequencer = function() {
+                integrationSequencer++
+                // debugger
+                return window.hotPx.hash(integrationSequencer);
+            }
+
+            var sendIntegrationEvent = function(listener, sequencer) {
+                var scriptTag;
+                for (var i = 0; i < document.scripts.length; i++) {
+                    if (document.scripts[i].id == 'hotmart_pixel_integration_' + sequencer) {
+                        scriptTag = document.scripts[i];
+                    }
+                }
+                listener.onPixelInjection(function() {
+                    scriptTag.dispatchEvent(new Event('all-pixels-injected'));
+                });
+            }
+
+            return {
+                injectIntegrationScript: injectIntegrationScript,
+                injectContextScript: injectContextScript,
+                sendIntegrationEvent: sendIntegrationEvent
+            };
+        }();
+
+        window.hotPx.InjectionListener = function(injectionIdentifier, settings, listModel) {
+            var self = {};
+
+            var context = settings.context;
+            var instanceId = settings.instanceId;
+            var phase = settings.phase;
+            var pixelHost = settings.pixelHost;
+            var apiTrackingHost = settings.apiTrackingHost;
+            var apiCheckoutHost = settings.apiCheckoutHost;
+            var eventId = injectionIdentifier;
+
+            var totalOfPixelsToInject = listModel.length;
+            var pixelsToInject = [];
+            for (var i = 0; i < listModel.length; i++) {
+                var model = listModel[i];
+                pixelsToInject.push(model.templateKey);
+            }
+
+            var totalInjectedSuccessfully = 0;
+            var pixelsInjectedSuccessfully = [];
+            var begin = new Date();
+            var hasSentEvent = false;
+
+            var injectionReadyCallback = function(){};
+
+            var onPixelInjection = function(callback) {
+                injectionReadyCallback = callback;
+
+                // trigger in case subscription was made after load all scripts
+                if (totalInjectedSuccessfully == totalOfPixelsToInject && totalOfPixelsToInject > 0) {
+                    injectionReadyCallback.call();
+                }
+            };
+
+            var eventCheckBeforeUnload = function() {
+                if (!hasSentEvent && totalOfPixelsToInject > 0) {
+                    hasSentEvent = true;
+                    sendPixelInjectionEvent(
+                        eventId, totalInjectedSuccessfully, pixelsInjectedSuccessfully,
+                        {
+                            "begin": begin,
+                            "end": new Date(),
+                            "reasonToFinish": 'beforeunload-triggered'
+                        }
+                    );
+                }
+            };
+
+            var countInjectionEvent = function(e) {
+                if(!e.data ||
+                    e.data.injectionIdentificator !== injectionIdentifier ||
+                    (e.data.eventType !== 'iframe-injected' && e.data.eventType !== 'js-injected'))
+                {
+                    return;
+                }
+
+                totalInjectedSuccessfully += 1;
+                pixelsInjectedSuccessfully.push(e.data.elementId);
+                if (e.data.host) {
+                    domainsInjectedSuccessfully.push(e.data.host);
+                }
+                if (e.data.iframeSrc) {
+                    iframesToInjectedSuccessfully.push(e.data.iframeSrc);
+                }
+
+                if (totalInjectedSuccessfully == totalOfPixelsToInject &&
+                    totalOfPixelsToInject > 0)
+                {
+
+                    if (!hasSentEvent) {
+                        hasSentEvent = true;
+
+                        sendPixelInjectionEvent(
+                            eventId, totalInjectedSuccessfully, pixelsInjectedSuccessfully,
+                            {
+                                "begin": begin,
+                                "end": new Date(),
+                                "reasonToFinish": 'all-pixels-injected'
+                            }
+                        );
+
+                        // wait 1 second to give time to provider's requests get fulfilled
+                        setTimeout(injectionReadyCallback, 1000);
+                    }
+
+                }
+            };
+
+            var sendPixelInjectionEvent = function (
+                eventId, totalInjectedSuccessfully, pixelsInjectedSuccessfully, executionInfo)
+             {
+                const obj = {
+                    system: "app_pixel",
+                    entity: "pixel",
+                    action: "inject",
+                    event_version: "1.1",
+                    data_version: "1.0",
+                    event: {
+                        totalToInject: totalOfPixelsToInject,
+                        totalInjectedSuccessfully: totalInjectedSuccessfully,
+                        newCheckout: window.location.href.indexOf("/next/") != -1 ? true : false,
+                        pixelsToInject: pixelsToInject,
+                        iframesToInject: iframesToInject,
+                        iframesToInjectedSuccessfully: iframesToInjectedSuccessfully,
+                        domainsToInject: domainsToInject,
+                        domainsInjectedSuccessfully: domainsInjectedSuccessfully,
+                        pixelsInjectedSuccessfully: pixelsInjectedSuccessfully,
+                        timeToRun: {
+                            begin: executionInfo.begin.toISOString(),
+                            end: executionInfo.end.toISOString(),
+                            totalInMilliseconds: (executionInfo.end - executionInfo.begin),
+                            reasonToFinish: executionInfo.reasonToFinish,
+                        },
+                        context:  context,
+                        eventId:  eventId,
+                        phase: phase,
+                        pixelEventTestApi: pixelEventTestApi ? true : false,
+                        instanceId: instanceId,
+                        pixelHost: pixelHost,
+                        userAgent: navigator.userAgent
+                    }
+                };
+                checkMonitoring++;
+                try {
+                    window.navigator.sendBeacon(document.location.protocol + '//' +  apiTrackingHost + '/rest/track/event/json', JSON.stringify(obj));
+                } catch {
+                    let http = new XMLHttpRequest();
+                    const url = document.location.protocol + '//' +  apiTrackingHost + '/rest/track/event/json';
+                    const params = JSON.stringify(obj);
+                    http.open('POST', url, true);
+                    http.send(params);
+                }
+            };
+
+            if (totalOfPixelsToInject == 0) {
+                hasSentEvent = true;
+                sendPixelInjectionEvent(
+                    eventId, totalInjectedSuccessfully, pixelsInjectedSuccessfully,
+                    {
+                        "begin": begin,
+                        "end": new Date(),
+                        "reasonToFinish": 'no-pixels-to-inject'
+                    }
+                );
+            } else {
+                (function addInjectionListener() {
+                    window.addEventListener("message", countInjectionEvent);
+                    window.onbeforeunload = function(event) {eventCheckBeforeUnload();};
+                })();
+            }
+
+            return {
+                onPixelInjection: onPixelInjection
+            };
+        };
+
+        window.hotPx.injector = function() {
+            var self = {};
+
+            var injectAll = function(settings, listModel) {
+                //debugger
+                var listener = new window.hotPx.InjectionListener(settings.eventId, settings, listModel);
+                //debugger
+                injectPixels(listModel, settings.eventId, settings.eventId);
+                return listener;
+            };
+
+            var injectPixels = function(models, injectionIdentificator, eventId) {
+                models.forEach(function(model) {
+                    switch(model.type) {
+                        case 'IFRAME':
+                            injectIframe(model.id, model.code, model.templateKey, injectionIdentificator, eventId);
+                            break;
+                        default:
+                            injectScript(model.id, null, model.code, model.templateKey, injectionIdentificator);
+                    }
+                })
+            }
+
+            var injectScript = function(s_id, s_src, s_innerHtml, templateKey, injectionIdentificator) {
+                var old = document.getElementById(s_id);
+                if(old){
+                    old.parentNode.removeChild(old);
+                }
+                var script = document.createElement('script');
+                script.id = s_id + '_' + injectionIdentificator;
+                if (s_innerHtml) {
+                    var localTemplateKey = templateKey || '';
+                    var loadMessageCode = ';\window.postMessage( \n\
+                        ({ \n\
+                            "eventType": "js-injected", \n\
+                            "elementId": "' + localTemplateKey + '", \n\
+                            "injectionIdentificator": "' + injectionIdentificator + '" \n\
+                        }) \n\
+                    , "*" )';
+                    script.innerHTML = s_innerHtml + loadMessageCode;
+                }
+                if (s_src) {
+                    script.src = s_src;
+                }
+                
+                window.document.body.appendChild(script);
+            };
+
+            var injectIframe = function(f_id, f_src, templateKey, injectionIdentificator, eventId) {
+                var pxProtocol = window.hotPx.current.src.split(':')[0];
+                var frame = document.createElement('iframe');
+                var localTemplateKey = templateKey || '';
+                frame.id = f_id + '_' + injectionIdentificator;
+                frame.src = f_src + '&event_id=' + eventId;
+                frame.src = frame.src.replace('http:', pxProtocol + ':');
+                frame.style.display = 'none';
+                frame.width = '1px';
+                frame.height = '1px';
+
+                domainsToInject.push(frame.src.indexOf("/?&iframeSrc") != -1 ? frame.src.split("/?&iframeSrc")[0] : frame.src.indexOf("?hotmart_pixel_integration") ? frame.src.split("?hotmart_pixel_integration")[0] : frame.src);
+                iframesToInject.push(frame.src);
+
+                document.body.appendChild(frame);
+            };
+
+            return {
+                injectAll: injectAll,
+            };
+        }();
+        window.onbeforeunload = function() {
+            if (checkFunction == 0 || checkMonitoring == 0){
+                var trackingHost = window.location.host.indexOf("buildstaging") ? "tracking-api.buildstaging.com" : "tracking-api.hotmart.com";
+                var endLoadScript = new Date();
+                const obj = {
+                    system: "app_pixel",
+                    entity: "pixel",
+                    action: "error",
+                    event_version: "1.1",
+                    data_version: "1.0",
+                    event: {
+                        callInjectIntegrationScript: false,
+                        callInjectContextScript: false,
+                        timeToRun: {
+                            begin: injectScript,
+                            end: endLoadScript,
+                            totalInMilliseconds: (endLoadScript - injectScript),
+                            reasonToFinish: "no-px-functions-performed",
+                        },
+                        userAgent: navigator.userAgent
+                    }
+                };
+                try {
+                    window.navigator.sendBeacon(document.location.protocol + '//' +  trackingHost + '/rest/track/event/json', JSON.stringify(obj));
+                } catch {
+                    let http = new XMLHttpRequest();
+                    const url = document.location.protocol + '//' +  trackingHost + '/rest/track/event/json';
+                    const params = JSON.stringify(obj);
+                    http.open('POST', url, true);
+                    http.send(params);
+                }
+            }
+        };
+    }
+})();

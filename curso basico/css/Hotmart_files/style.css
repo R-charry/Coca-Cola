@@ -1,0 +1,253 @@
+body {
+    width: 100%;
+    margin: 0;
+}
+
+body, td {
+    font-family: "Tahoma", "Verdana", "Arial", sans-serif;
+    font-size:11px;
+    color:#666;
+}
+
+a {
+    text-decoration:none;
+    color:#666;
+}
+
+a:hover {
+    text-decoration:underline;
+}
+
+ul {
+    padding: 0;
+}
+
+select {
+    border:1px solid #ccc;
+    font-size:11px;
+    float:right;
+    margin:0 10px 0 0;
+}
+
+.img-responsive{
+    max-width: 100%;
+    display: block;
+    height: auto;
+}
+.meucontainer {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+}
+
+.header {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    align-content: flex-start;
+    flex: 1;
+}
+
+.header a {
+    padding: 10px;
+}
+
+.header>a>img {
+    flex-grow: 1;
+    flex-shrink: 1;
+}
+
+.details {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: center;
+    align-content: flex-start;
+    flex: 1;
+}
+
+.info, .instructions {
+    background-color: #F5F5F5;
+    padding: 10px 20px;
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.info table {
+    flex: 1;
+    width: 100%;
+}
+
+.info th {
+    text-align: left;
+    font-size: 14px;
+}
+
+.info td {
+    padding: 10px;
+    font-size: 14px;
+    text-align: right;
+    width: 50%;
+    word-break: break-all;
+
+}
+
+h2 {
+    border-bottom: 1px dotted lightgray;
+    flex: 1;
+}
+
+.amount {
+    font-weight: bold;
+    color: green;
+}
+
+.payment-methods {
+    text-align: center;
+    margin-top: 20px;
+    display: flex;
+    flex: 1;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    align-items: center;
+    background-color: #FFF;
+}
+
+li {
+    background: url('../img/arrow_right_green.png') no-repeat 7px 7px transparent;
+    list-style-type: none;
+    margin: 0;
+    padding: 7px 0px 0px 24px;
+    vertical-align: middle;
+}
+
+.detail {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+#pagoslink-instructions {
+    display: none;
+}
+
+.linkpagos {
+    display: flex;
+    align-items: center;
+}
+
+.details:first-child {
+    align-self: center;
+}
+
+.linkpagos img {
+    width: 25px;
+}
+
+.linkpagos a {
+    display: inline-block;
+    padding: 5px 0 0 0;
+    width: 76px;
+    height: 17px;
+    text-align: center;
+    color: #fff;
+    font-size: 10px;
+    font-family: Tahoma, Verdana, Arial;
+    background: url('../img/btn_verde_72.png');
+    text-decoration: none;
+}
+
+.footer {
+    flex: 1;
+    justify-content: center;
+    margin: 20px 5px;
+    text-align: center;
+}
+
+/* Medium devices (desktops, 992px and up) */
+@media (min-width: 992px) {
+    .meucontainer {
+        width: 800px;
+        margin: 0 auto;
+    }
+}
+
+.online-payment-instructions {
+    background-color: white;
+    padding: 2%;
+}
+
+.online-payment-title {
+    padding-bottom: 20px; font-size: 15px; text-align: center; line-height: 2;
+}
+
+.online-payment-link {
+    line-height: 3;
+}
+
+.online-payment-description {
+    width: 68%; float: left;
+}
+
+.online-payment-image {
+    width: 20%; float: left;
+}
+
+.online-payment-div-left {
+    width: 48%; padding: 1%; font-size: 14px; float: left;
+}
+
+.online-payment-div-right {
+    width: 48%; padding: 1%; font-size: 14px; float: right;
+}
+
+.btn {
+    margin-bottom: 15px;
+    width: 150px;
+    font-family: OpenSans;
+    font-size: 14px;
+    font-weight: bold;
+    font-stretch: normal;
+    font-style: normal;
+    line-height: normal;
+    letter-spacing: normal;
+    text-align: center;
+    color: #1696d7;
+    border: none;
+    background-color: Transparent;
+    height: 30px;
+    padding: 10px;
+}
+
+@media (max-width: 768px) {
+    .online-payment-description {
+        margin-bottom: 5%;
+    }
+
+    .online-payment-div-left {
+        padding: 2%; font-size: 12px; width: 100%; float: inherit; margin: 1%;
+    }
+
+    .online-payment-div-right {
+        padding: 2%; font-size: 12px; width: 100%; float: inherit;  margin: 1%;
+    }
+
+    .online-payment-image {
+        width: 25%;
+    }
+}
+
+@media print {
+    .btn {
+        display: none;
+    }
+
+    .online-payment-instructions {
+        display: none;
+    }
+}

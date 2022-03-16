@@ -1,0 +1,15 @@
+'use strict';
+
+var clipboard = new ClipboardJS('.btn.copy', {
+	text: function text() {
+		return document.getElementById('code').innerText;
+	}
+});
+
+clipboard.on('success', function (e) {
+	e.trigger.innerText = 'CÓDIGO COPIADO!';
+
+	setTimeout(function () {
+		e.trigger.innerText = 'COPIAR CÓDIGO';
+	}, 2000);
+});

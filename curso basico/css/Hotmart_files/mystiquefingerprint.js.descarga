@@ -1,0 +1,59 @@
+var Mystique = {
+    _flattenComponents: function (components) {
+        var object = {};
+        for (var i = 0; i < components.length; i++) {
+            var key = components[i].key;
+            var value = components[i].value;
+            if (key != 'webgl' && key != 'canvas') {
+                object[key] = value;
+            }
+        }
+        return object;
+    },
+    // https://gist.github.com/Xeoncross/7663273#file-ajax-js-L10
+    ajax: function (url, callback, data) {
+        try {
+            var x = new (XMLHttpRequest || ActiveXObject)('Microsoft.XMLHTTP');
+            x.open('POST', url, true);
+            x.setRequestHeader('Content-type', 'application/json; charset=utf-8;');
+            x.onreadystatechange = function () {
+                if (x.readyState < 4 ) {
+                    return;
+                }
+                callback && callback();
+            };
+            x.send(data);
+        } catch (e) {
+        }
+    },
+    registerFingerprint: function (done, options, templateType) {
+        templateType = typeof templateType !== 'undefined' ? templateType : 'boleto-default';
+        var self = this;
+        if (!options.paymentHash) {
+            throw "paymentHash is needed to register the fingerprint";
+        }
+        new Fingerprint2().get(function (result, components) {
+            var browser = BrowserDetect.browser;
+            // see http://stackoverflow.com/a/19883965/4770399 for possible values.
+            var os = BrowserDetect.os;
+            var data = self._flattenComponents(components);
+            data['template_type'] = templateType;
+            data['location_url'] = window.location.href;
+            var fingerprint = {
+                payment_hash: options.paymentHash,
+                fingerprint: result,
+                browser: browser,
+                os: os,
+                data: JSON.stringify(data)
+            };
+            if (options.justPrint) {
+                console.log('Mock sending data to mystique due to current environment:\n' + JSON.stringify(fingerprint));
+                if (done) {
+                    done();
+                }
+            } else {
+                self.ajax('https://fingerprint.ebanx.com/analytics', done, JSON.stringify(fingerprint));
+            }
+        });
+    }
+};
